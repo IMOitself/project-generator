@@ -25,8 +25,11 @@ public class MainActivity extends Activity {
 
     // File contents
     private String buildGradle_top_level = "";
+	private String gradleProperties = "";
+	private String localProperties = "";
     private String settingsGradle = "include ':app'";
     private String gitIgnore = "/build";
+
     private String buildGradle_app_level = "";
     private String proguardRules = "";
     private String androidManifest = "";
@@ -63,71 +66,128 @@ public class MainActivity extends Activity {
             requestStoragePermission();
             return;
         }
-		
+
 		baseDir += packageName + "/";
-		
-		if (new File(baseDir).exists()){
+
+		if (new File(baseDir).exists()) {
 			showToast("Already exists");
 			return;
 		}
 
         List<FileContent> fileContents = new ArrayList<>();
-		buildGradle_top_level += "Buildscript {\n";
+		buildGradle_top_level += "buildscript {\n";
+		buildGradle_top_level += "    ext.build_gradle_version = '3.6.1'\n";
+		buildGradle_top_level += "\n";
 		buildGradle_top_level += "    repositories {\n";
-		buildGradle_top_level += "        jcenter()\n";
+		buildGradle_top_level += "        maven { url 'https://maven.aliyun.com/repository/public/' }\n";
+		buildGradle_top_level += "        maven { url 'https://maven.aliyun.com/repository/google/' }\n";
+		buildGradle_top_level += "        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }\n";
+		buildGradle_top_level += "        maven { url 'https://dl.bintray.com/ppartisan/maven/' }\n";
+		buildGradle_top_level += "        maven { url \"https://clojars.org/repo/\" }\n";
+		buildGradle_top_level += "        maven { url \"https://jitpack.io\" }\n";
+		buildGradle_top_level += "        google()\n";
+		buildGradle_top_level += "        mavenLocal()\n";
+		buildGradle_top_level += "        mavenCentral()\n";
 		buildGradle_top_level += "    }\n";
 		buildGradle_top_level += "    dependencies {\n";
-		buildGradle_top_level += "        classpath 'com.android.tools.build:gradle:1.+'\n";
+		buildGradle_top_level += "        classpath \"com.android.tools.build:gradle:$build_gradle_version\"\n";
+		buildGradle_top_level += "        \n";
+		buildGradle_top_level += "    }\n";
+		buildGradle_top_level += "    \n";
+		buildGradle_top_level += "}\n";
+		buildGradle_top_level += "allprojects {\n";
+		buildGradle_top_level += "    repositories {\n";
+		buildGradle_top_level += "        maven { url 'https://maven.aliyun.com/repository/public/' } \n";
+		buildGradle_top_level += "        maven { url 'https://maven.aliyun.com/repository/google/' }\n";
+		buildGradle_top_level += "        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }\n";
+		buildGradle_top_level += "        maven { url 'https://dl.bintray.com/ppartisan/maven/' }\n";
+		buildGradle_top_level += "        maven { url \"https://clojars.org/repo/\" }\n";
+		buildGradle_top_level += "        maven { url \"https://jitpack.io\" }\n";
+		buildGradle_top_level += "        mavenLocal()\n";
+		buildGradle_top_level += "        mavenCentral()\n";
+		buildGradle_top_level += "        google()\n";
 		buildGradle_top_level += "    }\n";
 		buildGradle_top_level += "}\n";
 		buildGradle_top_level += "\n";
-		buildGradle_top_level += "allprojects {\n";
-		buildGradle_top_level += "    repositories {\n";
-		buildGradle_top_level += "        jcenter()\n";
-		buildGradle_top_level += "    }\n";
+		buildGradle_top_level += "task clean(type: Delete) {\n";
+		buildGradle_top_level += "    delete rootProject.buildDir\n";
 		buildGradle_top_level += "}";
+		gradleProperties += "# Project-wide Gradle settings.\n";
+		gradleProperties += "# IDE (e.g. Android Studio) users:\n";
+		gradleProperties += "# Gradle settings configured through the IDE *will override*\n";
+		gradleProperties += "# any settings specified in this file.\n";
+		gradleProperties += "# For more details on how to configure your build environment visit\n";
+		gradleProperties += "# http://www.gradle.org/docs/current/userguide/build_environment.html\n";
+		gradleProperties += "# Specifies the JVM arguments used for the daemon process.\n";
+		gradleProperties += "# The setting is particularly useful for tweaking memory settings.\n";
+		gradleProperties += "org.gradle.jvmargs=-Xmx2048m\n";
+		gradleProperties += "# When configured, Gradle will run in incubating parallel mode.\n";
+		gradleProperties += "# This option should only be used with decoupled projects. More details, visit\n";
+		gradleProperties += "# http://www.gradle.org/docs/current/userguide/multi_project_builds.html#sec:decoupled_projects\n";
+		gradleProperties += "# org.gradle.parallel=true\n";
+		gradleProperties += "# AndroidX package structure to make it clearer which packages are bundled with the\n";
+		gradleProperties += "# Android operating system, and which are packaged with your app\"s APK\n";
+		gradleProperties += "# https://developer.android.com/topic/libraries/support-library/androidx-rn\n";
+		gradleProperties += "android.useAndroidX=false\n";
+		gradleProperties += "# Automatically convert third-party libraries to use AndroidX\n";
+		gradleProperties += "android.enableJetifier=false";
+		localProperties += "## This file is automatically generated by Android Studio.\n";
+		localProperties += "# Do not modify this file -- YOUR CHANGES WILL BE ERASED!\n";
+		localProperties += "#\n";
+		localProperties += "# This file should *NOT* be checked into Version Control Systems,\n";
+		localProperties += "# as it contains information specific to your local configuration.\n";
+		localProperties += "#\n";
+		localProperties += "# Location of the SDK. This is only used by Gradle.\n";
+		localProperties += "# For customization when using a Version Control System, please read the\n";
+		localProperties += "# header note.\n";
+		localProperties += "#sdk.dir=";
 
 		buildGradle_app_level += "apply plugin: 'com.android.application'\n";
 		buildGradle_app_level += "\n";
 		buildGradle_app_level += "android {\n";
-		buildGradle_app_level += "    compileSdkVersion 21\n";
-		buildGradle_app_level += "    buildToolsVersion \"21.1.0\"\n";
+		buildGradle_app_level += "    compileSdkVersion 29\n";
+		buildGradle_app_level += "    buildToolsVersion \"29.0.3\"\n";
 		buildGradle_app_level += "\n";
 		buildGradle_app_level += "    defaultConfig {\n";
 		buildGradle_app_level += "        applicationId \"" + packageName + "\"\n";
-		buildGradle_app_level += "        minSdkVersion 14\n";
-		buildGradle_app_level += "        targetSdkVersion 21\n";
+		buildGradle_app_level += "        minSdkVersion 21\n";
+		buildGradle_app_level += "        targetSdkVersion 29\n";
 		buildGradle_app_level += "        versionCode 1\n";
 		buildGradle_app_level += "        versionName \"1.0\"\n";
 		buildGradle_app_level += "    }\n";
+		buildGradle_app_level += "\n";
 		buildGradle_app_level += "    buildTypes {\n";
 		buildGradle_app_level += "        release {\n";
 		buildGradle_app_level += "            minifyEnabled false\n";
-		buildGradle_app_level += "            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'\n";
+		buildGradle_app_level += "            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'\n";
 		buildGradle_app_level += "        }\n";
 		buildGradle_app_level += "    }\n";
 		buildGradle_app_level += "}\n";
 		buildGradle_app_level += "\n";
 		buildGradle_app_level += "dependencies {\n";
-		buildGradle_app_level += "    compile fileTree(dir: 'libs', include: ['*.jar'])\n";
+		buildGradle_app_level += "    implementation fileTree(dir: \"libs\", include: [\"*.jar\"])\n";
 		buildGradle_app_level += "}";
 		proguardRules += "# Add project specific ProGuard rules here.\n";
-		proguardRules += "# By default, the flags in this file are appended to flags specified\n";
-		proguardRules += "# in C:\\tools\\adt-bundle-windows-x86_64-20131030\\sdk/tools/proguard/proguard-android.txt\n";
-		proguardRules += "# You can edit the include path and order by changing the proguardFiles\n";
-		proguardRules += "# directive in build.gradle.\n";
+		proguardRules += "# You can control the set of applied configuration files using the\n";
+		proguardRules += "# proguardFiles setting in build.gradle.\n";
 		proguardRules += "#\n";
 		proguardRules += "# For more details, see\n";
 		proguardRules += "#   http://developer.android.com/guide/developing/tools/proguard.html\n";
-		proguardRules += "\n";
-		proguardRules += "# Add any project specific keep options here:\n";
 		proguardRules += "\n";
 		proguardRules += "# If your project uses WebView with JS, uncomment the following\n";
 		proguardRules += "# and specify the fully qualified class name to the JavaScript interface\n";
 		proguardRules += "# class:\n";
 		proguardRules += "#-keepclassmembers class fqcn.of.javascript.interface.for.webview {\n";
 		proguardRules += "#   public *;\n";
-		proguardRules += "#}";
+		proguardRules += "#}\n";
+		proguardRules += "\n";
+		proguardRules += "# Uncomment this to preserve the line number information for\n";
+		proguardRules += "# debugging stack traces.\n";
+		proguardRules += "#-keepattributes SourceFile,LineNumberTable\n";
+		proguardRules += "\n";
+		proguardRules += "# If you keep the line number information, uncomment this to\n";
+		proguardRules += "# hide the original source file name.\n";
+		proguardRules += "#-renamesourcefileattribute SourceFile";
 
 		androidManifest += "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 		androidManifest += "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n";
@@ -151,7 +211,7 @@ public class MainActivity extends Activity {
 		androidManifest += "    </application>\n";
 		androidManifest += "\n";
 		androidManifest += "</manifest>";
-		java += "Package " + packageName + ";\n";
+		java += "package " + packageName + ";\n";
 		java += "\n";
 		java += "import android.app.Activity;\n";
 		java += "import android.os.Bundle;\n";
@@ -194,7 +254,7 @@ public class MainActivity extends Activity {
 		resStylesXmlv21 += "    <style name=\"AppTheme\" parent=\"@android:style/Theme.Material.Light\">\n";
 		resStylesXmlv21 += "\t</style>\n";
 		resStylesXmlv21 += "</resources>";
-		
+
         // Root files
         fileContents.add(new FileContent(baseDir + ".gitignore", gitIgnore));
         fileContents.add(new FileContent(baseDir + "build.gradle", buildGradle_top_level));
@@ -223,7 +283,8 @@ public class MainActivity extends Activity {
 
         try {
             createFilesAndDirs(fileContents);
-            showToast("Files created successfully!");
+            showToast("Files created successfully at:\n" + baseDir);
+			finishAffinity();
         } catch (IOException e) {
             showToast("Error creating files: " + e.getMessage());
         }
@@ -265,7 +326,7 @@ public class MainActivity extends Activity {
     }
 
     private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     // Helper class to hold file path and content
@@ -278,4 +339,5 @@ public class MainActivity extends Activity {
             this.content = content;
         }
     }
+
 }
