@@ -1,4 +1,4 @@
-package com.example.filegenerator;
+package imo.project_generator;
 
 import android.app.Activity;
 import android.content.Intent;
