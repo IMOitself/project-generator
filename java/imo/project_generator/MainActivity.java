@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
             return;
         }
 
-		baseDir += packageName + "/";
+		baseDir += packageName.replace(".", "_") + "/";
 
 		if (new File(baseDir).exists()) {
 			showToast("Already exists");
