@@ -109,17 +109,23 @@ public class MainActivity extends Activity {
                 String content = readFileFromAssets(currentAssetPath);
                 String relativeOutputPath = currentAssetPath.substring("to_generate/".length());
 
-                if (relativeOutputPath.endsWith("MainActivity.java")) {
-                    String packagePath = packageName.replace('.', '/');
-                    relativeOutputPath = "app/src/main/java/" + packagePath + "/MainActivity.java";
-                } else if (relativeOutputPath.endsWith("gitignore")) {
-                    relativeOutputPath = ".gitignore";
-                }
-                fileList.add(new FileContent(relativeOutputPath, content));
+                fileList.add(adjustPathOrContentIfNeeded(relativeOutputPath, content));
             } else {
                 collectAssetFiles(assetManager, currentAssetPath, fileList);
             }
         }
+    }
+    
+    private FileContent adjustPathOrContentIfNeeded(String path, String content){
+        if (path.endsWith("gitignore")) {
+            path = ".gitignore";
+        }
+        else if (path.endsWith("MainActivity.java")) {
+            String packagePath = packageName.replace('.', '/');
+            path = "app/src/main/java/" + packagePath + "/MainActivity.java";
+        }
+        content = content.replace("IMO.CHANGEME", packageName);
+        return new FileContent(path, content);
     }
 
     private String readFileFromAssets(String filePath) {
