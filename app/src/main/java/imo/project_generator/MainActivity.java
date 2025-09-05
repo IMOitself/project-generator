@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,7 +24,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
 
 public class MainActivity extends Activity {
     private EditText packageNameEditText;
@@ -91,35 +91,57 @@ public class MainActivity extends Activity {
     }
 
     private void generateFiles(Uri directoryUri) {
-        List<FileContent> fileContents = new ArrayList<>();
-        fileContents.add(new FileContent("build.gradle", readFileFromAssets("to_generate/build.gradle")));
-        fileContents.add(new FileContent("settings.gradle", readFileFromAssets("to_generate/settings.gradle")));
-        fileContents.add(new FileContent("gradle.properties", readFileFromAssets("to_generate/gradle.properties")));
-
-        fileContents.add(new FileContent("app/build.gradle", readFileFromAssets("to_generate/app/build.gradle")));
-        fileContents.add(new FileContent("app/proguard-rules.pro", readFileFromAssets("to_generate/app/proguard-rules.pro")));
-
-        fileContents.add(new FileContent("app/src/main/AndroidManifest.xml", readFileFromAssets("to_generate/app/src/main/AndroidManifest.xml")));
-        fileContents.add(new FileContent("app/src/main/res/layout/activity_main.xml", readFileFromAssets("to_generate/app/src/main/res/layout/activity_main.xml")));
-        fileContents.add(new FileContent("app/src/main/res/values/strings.xml", readFileFromAssets("to_generate/app/src/main/res/values/strings.xml")));
-        fileContents.add(new FileContent("app/src/main/res/values/styles.xml", readFileFromAssets("to_generate/app/src/main/res/values/styles.xml")));
-        fileContents.add(new FileContent("app/src/main/res/drawable/ic_launcher.png", readFileFromAssets("to_generate/app/src/main/res/drawable/ic_launcher.png")));
-        
-        String packagePath = packageName.replace('.', '/');
-        fileContents.add(new FileContent("app/src/main/java/" + packagePath + "/MainActivity.java", readFileFromAssets("to_generate/app/src/main/java/MainActivity.java")));
-        fileContents.add(new FileContent(".gitignore", readFileFromAssets("to_generate/gitignore")));
-        
         try {
-            createFilesAndDirs(MainActivity.this, directoryUri, fileContents);
-            showToast("Files created successfully");
-            finishAffinity();
+            List<FileContent> fileList = new ArrayList<>();
+            collectAssetFiles(getAssets(), "to_generate", fileList);
+            createFilesAndDirs(this, directoryUri, fileList);
             
-        } catch (Exception e) {
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void collectAssetFiles(AssetManager assetManager, String assetPath, List<FileContent> fileList) throws IOException {
+        String[] assets = assetManager.list(assetPath);
+        for (String asset : assets) {
+            String currentAssetPath = assetPath + "/" + asset;
+            if (assetManager.list(currentAssetPath).length == 0) {
+                String content = readFileFromAssets(currentAssetPath);
+                String relativeOutputPath = currentAssetPath.substring("to_generate/".length());
+
+                if (relativeOutputPath.endsWith("MainActivity.java")) {
+                    String packagePath = packageName.replace('.', '/');
+                    relativeOutputPath = "app/src/main/java/" + packagePath + "/MainActivity.java";
+                } else if (relativeOutputPath.endsWith("gitignore")) {
+                    relativeOutputPath = ".gitignore";
+                }
+                fileList.add(new FileContent(relativeOutputPath, content));
+            } else {
+                collectAssetFiles(assetManager, currentAssetPath, fileList);
+            }
+        }
+    }
+
+    private String readFileFromAssets(String filePath) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            InputStream inputStream = this.getAssets().open(filePath);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line).append("\n");
+            }
+            inputStream.close();
+            reader.close();
+            
+        } catch (IOException e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            packageNameEditText.setText(sw.toString());
+            return sw.toString();
         }
+        return stringBuilder.toString();
     }
 
     private void createFilesAndDirs(Context context, Uri treeUri, List<FileContent> fileContents) throws IOException {
@@ -141,7 +163,7 @@ public class MainActivity extends Activity {
                     nextDirUri = DocumentsContract.createDocument(resolver, currentDirUri, DocumentsContract.Document.MIME_TYPE_DIR, segment);
                 }
                 if (nextDirUri == null) throw new IOException("Cant create folder: " + segment);
-                
+
                 parentDocumentId = DocumentsContract.getDocumentId(nextDirUri);
             }
 
@@ -153,32 +175,31 @@ public class MainActivity extends Activity {
 
             if (extension != null) mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
             if (mimeType == null) mimeType = "application/octet-stream";
-            
+
             Uri newFileUri = DocumentsContract.createDocument(resolver, currentDirUri, mimeType, fileName);
             if (newFileUri == null) throw new IOException("Failed to create file: " + fileName);
-            
-            OutputStream outputStream = null;
-            OutputStreamWriter writer = null;
+
             try {
-                outputStream = resolver.openOutputStream(newFileUri);
-                writer = new OutputStreamWriter(outputStream);
+                OutputStream outputStream = resolver.openOutputStream(newFileUri);
+                OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                 if (fileContent.content != null && !fileContent.content.isEmpty()) {
                     writer.write(fileContent.content);
                     writer.flush();
                 }
-            } finally {
-                if (writer != null) writer.close(); 
+                outputStream.close();
+                writer.close();
+            }catch(Exception e){
+                
             }
         }
     }
 
     private Uri findFileInDirectory(ContentResolver resolver, Uri childrenUri, String displayName) {
-        try{
+        try {
             Cursor cursor = resolver.query(
                 childrenUri,
                 new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME},
                 null, null, null);
-                
             if (cursor != null) {
                 while (cursor.moveToNext()) {
                     String name = cursor.getString(1);
@@ -209,27 +230,6 @@ public class MainActivity extends Activity {
 
     private void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    }
-    
-    private String readFileFromAssets(String filePath){
-        StringBuilder stringBuilder = new StringBuilder();
-        try {
-            InputStream inputStream = this.getAssets().open(filePath);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line).append("\n");
-            }
-            inputStream.close();
-            reader.close();
-        } catch (IOException e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            return sw.toString();
-        }
-
-        return stringBuilder.toString();
     }
 
     private static class FileContent {
