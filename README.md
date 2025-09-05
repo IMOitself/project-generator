@@ -7,7 +7,7 @@ I will not gonna be configuring this to...
 - support IDEs (like Android Studio) other than AIDE,
 - support for other android versions. the permission logic and stuffs is hard to babysit,
 - support androidx, appcompat, compose
-- support java 8 or above. my IDE does not have lambda functions oof!
+- support java 8 or above.
 
 ## Screenshot
 soon i guess, idk.
